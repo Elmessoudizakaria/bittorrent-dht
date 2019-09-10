@@ -1,29 +1,29 @@
-var common = require('./common')
-var DHT = require('../')
-var test = require('tape')
-var ed = require('ed25519-supercop')
-var bencode = require('bencode')
+const common = require('./common')
+const DHT = require('../')
+const test = require('tape')
+const ed = require('ed25519-supercop')
+const bencode = require('bencode')
 
-test('dht store with salt', function (t) {
+test('dht store with salt', t => {
   t.plan(3)
 
-  var dht = new DHT({ bootstrap: false, verify: ed.verify })
-  t.once('end', function () {
+  const dht = new DHT({ bootstrap: false, verify: ed.verify })
+  t.once('end', () => {
     dht.destroy()
   })
   common.failOnWarningOrError(t, dht)
 
-  dht.listen(function () {
+  dht.listen(() => {
     dht.addNode({ host: '127.0.0.1', port: dht.address().port })
     dht.once('node', ready)
   })
 
   function ready () {
-    var keys = ed.createKeyPair(ed.createSeed())
-    var publicKey = keys.publicKey
-    var secretKey = keys.secretKey
+    const keys = ed.createKeyPair(ed.createSeed())
+    const publicKey = keys.publicKey
+    const secretKey = keys.secretKey
 
-    var opts = {
+    const opts = {
       seq: 1,
       v: Buffer.from('hello world'),
       salt: Buffer.from('mysalt')
@@ -31,9 +31,9 @@ test('dht store with salt', function (t) {
 
     opts.k = publicKey
 
-    var toEncode = { salt: opts.salt, seq: opts.seq, v: opts.v }
+    const toEncode = { salt: opts.salt, seq: opts.seq, v: opts.v }
 
-    var encoded = bencode
+    const encoded = bencode
       .encode(toEncode)
       .slice(1, -1)
       .toString()
@@ -41,8 +41,8 @@ test('dht store with salt', function (t) {
     opts.sig = ed
       .sign(encoded, publicKey, secretKey)
 
-    dht.put(opts, function (_, hash) {
-      dht.get(hash, function (err, res) {
+    dht.put(opts, (_, hash) => {
+      dht.get(hash, (err, res) => {
         t.ifError(err)
 
         t.equal(res.v.toString('utf8'), opts.v.toString('utf8'),
